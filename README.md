@@ -46,35 +46,6 @@ The installer will:
 - Install it to `%LOCALAPPDATA%\Programs\Venus`
 - Optionally add the installation directory to your PATH
 
-### Manual Installation
-
-If you prefer manual installation, download the latest release for your platform from the [Releases page](https://github.com/Zee-Series-AI/venus_cli_releases/releases):
-
-- **macOS (Apple Silicon)**: `venus-macos-arm64.tar.gz`
-- **macOS (Intel)**: `venus-macos-x64.tar.gz`  
-- **Linux**: `venus-linux-x64.tar.gz`
-- **Windows**: `venus-windows-x64.zip`
-
-**Installation (macOS/Linux):**
-```bash
-# Extract the archive
-tar -xzf venus-macos-arm64.tar.gz  # or your downloaded file
-
-# Make executable (if needed)
-chmod +x venus
-
-# Move to PATH (optional)
-sudo mv venus /usr/local/bin/
-
-# Verify installation
-venus --help
-```
-
-**Installation (Windows):**
-1. Extract the zip file
-2. Add the directory to your PATH or run directly from the folder
-3. Run `venus --help` to verify
-
 ## Quick Start
 
 The CLI works out of the box with your local development environment. No configuration needed!
