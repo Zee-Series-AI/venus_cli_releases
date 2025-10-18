@@ -291,25 +291,6 @@ venus games create --name "My Game" --path "./dist"
 - Check specific command help: `venus games create --help`
 - Review the error messages carefully - they often contain helpful information
 
-## For Maintainers
-
-### Creating a Release
-
-To create a new release with automatic builds for all platforms:
-
-```bash
-# Create and push a version tag
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The CI/CD pipeline will automatically:
-- Build binaries for macOS (ARM64 & x64), Linux (x64), and Windows (x64)
-- Create a GitHub release with all platform binaries
-- Generate release notes
-
-For detailed instructions, see [.github/RELEASE_GUIDE.md](.github/RELEASE_GUIDE.md).
-
 ## License
 
 [Include license information here]
