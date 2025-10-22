@@ -8,13 +8,13 @@ A command-line interface tool for managing HTML5 games on the Venus platform. Th
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Commands](#commands)
-  - [games create](#games-create)
-  - [games update](#games-update)
-  - [games list](#games-list)
-  - [games configure](#games-configure)
-  - [env use](#env-use)
-  - [env list](#env-list)
-  - [env configure](#env-configure)
+  - [create-game](#create-game)
+  - [update-game](#update-game)
+  - [list-games](#list-games)
+  - [configure-game](#configure-game)
+  - [use-env](#use-env)
+  - [list-envs](#list-envs)
+  - [configure-env](#configure-env)
   - [update](#update)
 - [Environment Variables](#environment-variables)
 - [Usage Examples](#usage-examples)
@@ -56,13 +56,13 @@ The CLI works out of the box with your local development environment. No configu
 
 ```bash
 # Create a new game (creates game.config.json automatically)
-venus games create --name "My Game" --path "./dist"
+venus create-game --name "My Game" --path "./dist"
 
 # List your games
-venus games list
+venus list-games
 
 # Update your game (uses game.config.json - no need to specify ID or path!)
-venus games update
+venus update-game
 ```
 
 ## Configuration
@@ -81,13 +81,13 @@ The CLI supports multiple named environments (dev, staging, production, etc.):
 
 ```bash
 # Configure the default 'dev' environment
-venus env configure dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
+venus configure-env dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
 
 # Configure a staging environment
-venus env configure staging --base-url "https://staging-api.venus.com" --access-token "your-staging-token"
+venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "your-staging-token"
 
 # Configure a production environment
-venus env configure prod --base-url "https://api.venus.com" --access-token "your-production-token"
+venus configure-env prod --base-url "https://api.venus.com" --access-token "your-production-token"
 ```
 
 **Options:**
@@ -101,27 +101,27 @@ The configuration is saved to `~/.venus_cli/config.json`.
 
 ```bash
 # Switch to staging environment
-venus env use staging
+venus use-env staging
 
 # Switch to production environment
-venus env use prod
+venus use-env prod
 ```
 
 #### Listing Environments
 
 ```bash
 # See all configured environments
-venus env list
+venus list-envs
 ```
 
 ## Commands
 
-### games create
+### create-game
 
 Creates a new HTML5 game application on Venus.
 
 ```bash
-venus games create --name "My Awesome Game" --path "/path/to/game/dist"
+venus create-game --name "My Awesome Game" --path "/path/to/game/dist"
 ```
 
 **Options:**
@@ -145,18 +145,18 @@ This file stores your game's configuration and makes future updates easier:
 }
 ```
 
-With this file, you can run `venus games update` without specifying `--id` or `--path`!
+With this file, you can run `venus update-game` without specifying `--id` or `--path`!
 
-### games update
+### update-game
 
 Pushes a new game update to Venus with a new version.
 
 ```bash
-# Using game.config.json (recommended - created by venus games create)
-venus games update --bump patch
+# Using game.config.json (recommended - created by venus create-game)
+venus update-game --bump patch
 
 # Or specify manually
-venus games update --id "your-app-id" --path "/path/to/game/dist" --bump patch
+venus update-game --id "your-app-id" --path "/path/to/game/dist" --bump patch
 ```
 
 **Options:**
@@ -169,14 +169,14 @@ venus games update --id "your-app-id" --path "/path/to/game/dist" --bump patch
 - `minor`: 1.0.0 → 1.1.0
 - `patch`: 1.0.0 → 1.0.1
 
-**Note:** If you have a `game.config.json` file in your current directory (created by `venus games create`), the `--id` and `--path` options are optional. The command will use the values from the config file unless you explicitly override them.
+**Note:** If you have a `game.config.json` file in your current directory (created by `venus create-game`), the `--id` and `--path` options are optional. The command will use the values from the config file unless you explicitly override them.
 
-### games list
+### list-games
 
 Lists all your games on Venus.
 
 ```bash
-venus games list
+venus list-games
 ```
 
 **Output includes:**
@@ -185,12 +185,12 @@ venus games list
 - Current version
 - Last update timestamp
 
-### games configure
+### configure-game
 
 Configure your game.config.json for ease of deployment.
 
 ```bash
-venus games configure --id "your-app-id" --path "./dist"
+venus configure-game --id "your-app-id" --path "./dist"
 ```
 
 **Options:**
@@ -200,34 +200,34 @@ venus games configure --id "your-app-id" --path "./dist"
 **What it does:**
 Creates or updates the `game.config.json` file in your current directory, making future deployments easier by storing your game ID and path.
 
-### env use
+### use-env
 
 Switch to a different environment.
 
 ```bash
-venus env use staging
+venus use-env staging
 ```
 
 **Argument:**
 - Environment name: The name of the environment to use (e.g., `dev`, `staging`, `prod`)
 
-### env list
+### list-envs
 
 List all configured environments.
 
 ```bash
-venus env list
+venus list-envs
 ```
 
 Shows all environments you've configured, along with their base URLs and which one is currently active.
 
-### env configure
+### configure-env
 
 Configure a specific environment or update the currently active environment.
 
 ```bash
-venus env configure dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
-venus env configure staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
+venus configure-env dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
+venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
 ```
 
 **Argument:**
@@ -287,87 +287,87 @@ Environment variables take precedence over the config file.
 
 ```bash
 # For local development (no configuration needed)
-venus games create --name "Space Invaders HD" --path "./build/web"
+venus create-game --name "Space Invaders HD" --path "./build/web"
 # Output: App created with id 'abc123xyz'
 
 # For production environment (configure and switch first)
-venus env configure prod --base-url "https://api.venus.com" --access-token "my-secret-token"
-venus env use prod
-venus games create --name "Space Invaders HD" --path "./build/web"
+venus configure-env prod --base-url "https://api.venus.com" --access-token "my-secret-token"
+venus use-env prod
+venus create-game --name "Space Invaders HD" --path "./build/web"
 ```
 
 ### Example 2: Updating an Existing Game
 
 ```bash
-# If you have game.config.json (created by venus games create):
+# If you have game.config.json (created by venus create-game):
 
 # Update with default patch version bump (1.0.0 → 1.0.1)
-venus games update
+venus update-game
 
 # Update with a minor version bump (1.0.1 → 1.1.0)
-venus games update --bump minor
+venus update-game --bump minor
 
 # Update with a major version bump (1.1.0 → 2.0.0)
-venus games update --bump major
+venus update-game --bump major
 
 # If you don't have game.config.json, specify manually:
 
 # Update with patch version bump
-venus games update --id "abc123xyz" --path "./build/web" --bump patch
+venus update-game --id "abc123xyz" --path "./build/web" --bump patch
 
 # Override config file values
-venus games update --id "different-id" --path "./different/path" --bump minor
+venus update-game --id "different-id" --path "./different/path" --bump minor
 ```
 
 ### Example 3: Typical Development Workflow
 
 ```bash
 # Initial setup: Create your game
-venus games create --name "My Awesome Game" --path "./dist"
+venus create-game --name "My Awesome Game" --path "./dist"
 # This creates game.config.json automatically
 
 # Make changes to your game...
 # Build your game to ./dist
 
 # Push updates - super simple!
-venus games update
+venus update-game
 # Uses game.config.json, defaults to patch bump (1.0.0 → 1.0.1)
 
 # Major feature release
-venus games update --bump minor
+venus update-game --bump minor
 # 1.0.1 → 1.1.0
 
 # Breaking changes
-venus games update --bump major
+venus update-game --bump major
 # 1.1.0 → 2.0.0
 
 # Check all your games
-venus games list
+venus list-games
 ```
 
 ### Example 4: Multi-Environment Workflow
 
 ```bash
 # Configure staging environment
-venus env configure staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
+venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
 
 # Configure production environment
-venus env configure prod --base-url "https://api.venus.com" --access-token "production-token"
+venus configure-env prod --base-url "https://api.venus.com" --access-token "production-token"
 
 # List all environments
-venus env list
+venus list-envs
 
 # Use staging environment
-venus env use staging
+venus use-env staging
 
 # Create app in staging
-venus games create --name "My Game Beta" --path "./dist"
+venus create-game --name "My Game Beta" --path "./dist"
 
 # Switch to production
-venus env use prod
+venus use-env prod
 
 # Create app in production
-venus games create --name "My Game" --path "./dist"
+venus create-game --name "My Game" --path "./dist"
 ```
 
 ## Troubleshooting
@@ -390,10 +390,10 @@ venus games create --name "My Game" --path "./dist"
    - Verify the `game.config.json` file is valid JSON
 
 4. **Authentication errors**
-   - Run `venus env configure <env-name>` to update your credentials
+   - Run `venus configure-env <env-name>` to update your credentials
    - Check if your access token has expired
    - Verify the API base URL is correct
-   - Ensure you're using the correct environment with `venus env use <env-name>`
+   - Ensure you're using the correct environment with `venus use-env <env-name>`
 
 5. **Version conflicts**
    - When updating an app, the version must be higher than the current version
@@ -402,9 +402,7 @@ venus games create --name "My Game" --path "./dist"
 ### Getting Help
 
 - Check the command help: `venus --help`
-- Check games command help: `venus games --help`
-- Check env command help: `venus env --help`
-- Check specific command help: `venus games create --help` or `venus env configure --help`
+- Check specific command help: `venus create-game --help`, `venus update-game --help`, `venus configure-env --help`, etc.
 - Review the error messages carefully - they often contain helpful information
 
 ## License
