@@ -15,6 +15,7 @@ A command-line interface tool for managing HTML5 games on the Venus platform. Th
   - [env use](#env-use)
   - [env list](#env-list)
   - [env configure](#env-configure)
+  - [update](#update)
 - [Environment Variables](#environment-variables)
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
@@ -235,6 +236,41 @@ venus env configure staging --base-url "https://staging-api.venus.com" --access-
 **Options:**
 - `--base-url`: The Venus API endpoint URL
 - `--access-token`: Your authentication token for the Venus API
+
+### update
+
+Update the Venus CLI to the latest version.
+
+```bash
+venus update
+```
+
+**What it does:**
+1. Checks your current installed CLI version
+2. Fetches the latest version available from GitHub releases
+3. If a newer version is available, automatically downloads and installs it
+4. If you're already on the latest version, informs you that no update is needed
+
+**How it works:**
+- On Windows: Downloads and runs the PowerShell installer script
+- On macOS/Linux: Downloads and runs the bash installer script
+- The update process is automatic and will replace your current installation
+
+**Example output:**
+```
+Current version: 1.0.0
+Latest version: 1.1.0
+Updating via bash...
+✅ Update completed successfully.
+```
+
+or if already up to date:
+
+```
+Current version: 1.1.0
+Latest version: 1.1.0
+You are already up to date.
+```
 
 ## Environment Variables
 
