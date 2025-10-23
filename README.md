@@ -10,6 +10,7 @@ A command-line interface tool for managing HTML5 games on the Venus platform. Th
 - [Commands](#commands)
   - [create-game](#create-game)
   - [update-game](#update-game)
+  - [publish-game](#publish-game)
   - [list-games](#list-games)
   - [configure-game](#configure-game)
   - [use-env](#use-env)
@@ -55,14 +56,17 @@ The installer will:
 The CLI works out of the box with your local development environment. No configuration needed!
 
 ```bash
-# Create a new game (creates game.config.json automatically)
+# 1. Create a new game (creates game.config.json automatically)
 venus create-game --name "My Game" --path "./dist"
+
+# 2. Create new versions as you develop (uses game.config.json)
+venus update-game --bump patch
+
+# 3. Publish your game to a specific environment
+venus publish-game dev
 
 # List your games
 venus list-games
-
-# Update your game (uses game.config.json - no need to specify ID or path!)
-venus update-game
 ```
 
 ## Configuration
@@ -131,8 +135,8 @@ venus create-game --name "My Awesome Game" --path "/path/to/game/dist"
 **What it does:**
 1. Zips your game distribution folder
 2. Uploads the zip file to Venus storage
-3. Creates a new app with version 0.0.1
-4. Returns the created app ID
+3. Creates a new game with an initial version (0.0.1)
+4. Returns the created game ID
 5. Creates a `game.config.json` file in your current directory with the game ID and path
 
 **About game.config.json:**
@@ -140,36 +144,83 @@ venus create-game --name "My Awesome Game" --path "/path/to/game/dist"
 This file stores your game's configuration and makes future updates easier:
 ```json
 {
-  "gameId": "your-app-id",
+  "gameId": "your-game-id",
   "relativePathToDistFolder": "./dist"
 }
 ```
 
-With this file, you can run `venus update-game` without specifying `--id` or `--path`!
+With this file, you can run `venus update-game` and `venus publish-game` without specifying the game ID!
+
+**Note:** After creating a game, you'll need to use `publish-game` to make it visible in a specific environment.
 
 ### update-game
 
-Pushes a new game update to Venus with a new version.
+Creates a new version of your game with updated content.
 
 ```bash
 # Using game.config.json (recommended - created by venus create-game)
 venus update-game --bump patch
 
 # Or specify manually
-venus update-game --id "your-app-id" --path "/path/to/game/dist" --bump patch
+venus update-game --id "your-game-id" --path "/path/to/game/dist" --bump patch
 ```
 
 **Options:**
-- `--id` (optional): The app ID to update. If not provided, reads from `game.config.json`
+- `--id` (optional): The game ID to update. If not provided, reads from `game.config.json`
 - `--path` (optional): Path to your updated game's distribution/build folder. If not provided, reads from `game.config.json`
 - `--bump` (optional, default: `patch`): Version bump type - `major`, `minor`, or `patch`
 
 **Version Bumping:**
-- `major`: 1.0.0 → 2.0.0
-- `minor`: 1.0.0 → 1.1.0
-- `patch`: 1.0.0 → 1.0.1
+- `major`: 1.0.0 → 2.0.0 (breaking changes)
+- `minor`: 1.0.0 → 1.1.0 (new features)
+- `patch`: 1.0.0 → 1.0.1 (bug fixes)
+
+**What it does:**
+1. Zips your game distribution folder
+2. Uploads the new version to Venus storage
+3. Creates a new version entry for your game
+4. Does NOT automatically publish the version - use `publish-game` for that
 
 **Note:** If you have a `game.config.json` file in your current directory (created by `venus create-game`), the `--id` and `--path` options are optional. The command will use the values from the config file unless you explicitly override them.
+
+### publish-game
+
+Makes your game visible in a specific environment by publishing the latest version.
+
+```bash
+# Publish to a custom environment (dev, staging, etc.)
+venus publish-game dev
+
+# Publish to production
+venus publish-game prod
+```
+
+**Arguments:**
+- `environment` (required): The environment name to publish to (e.g., `dev`, `staging`, `prod`)
+
+**What it does:**
+1. Fetches your game information from `game.config.json`
+2. Gets the latest version of your game
+3. Publishes that version to the specified environment
+4. Returns a OneLink URL for accessing the game
+
+**Important:**
+- Uses `game.config.json` to determine which game to publish
+- For custom environments (non-prod), you must have configured that environment using `configure-env`
+- Publishing to `prod` uses the production publishing flow
+- Publishing to other environments pushes the game to that specific environment's backend
+
+**Example workflow:**
+```bash
+# Create a new version with your latest changes
+venus update-game --bump patch
+
+# Publish to dev environment for testing
+venus publish-game dev
+
+# Once tested, publish to production
+venus publish-game prod
+```
 
 ### list-games
 
@@ -283,17 +334,20 @@ Environment variables take precedence over the config file.
 
 ## Usage Examples
 
-### Example 1: Creating a New Game
+### Example 1: Creating and Publishing a New Game
 
 ```bash
-# For local development (no configuration needed)
+# Step 1: Create your game
 venus create-game --name "Space Invaders HD" --path "./build/web"
-# Output: App created with id 'abc123xyz'
+# Output: Game created with id 'abc123xyz'
+# Creates game.config.json automatically
 
-# For production environment (configure and switch first)
-venus configure-env prod --base-url "https://api.venus.com" --access-token "my-secret-token"
-venus use-env prod
-venus create-game --name "Space Invaders HD" --path "./build/web"
+# Step 2: Publish to dev environment for testing
+venus publish-game dev
+# Output: Published game with OneLink
+
+# Step 3: Once tested, publish to production
+venus publish-game prod
 ```
 
 ### Example 2: Updating an Existing Game
@@ -301,22 +355,25 @@ venus create-game --name "Space Invaders HD" --path "./build/web"
 ```bash
 # If you have game.config.json (created by venus create-game):
 
-# Update with default patch version bump (1.0.0 → 1.0.1)
-venus update-game
+# Create a new version with patch bump (1.0.0 → 1.0.1)
+venus update-game --bump patch
 
-# Update with a minor version bump (1.0.1 → 1.1.0)
+# Publish the new version to dev for testing
+venus publish-game dev
+
+# After testing, publish to production
+venus publish-game prod
+
+# Create a new version with a minor bump (1.0.1 → 1.1.0)
 venus update-game --bump minor
+venus publish-game prod
 
-# Update with a major version bump (1.1.0 → 2.0.0)
+# Create a new version with a major bump (1.1.0 → 2.0.0)
 venus update-game --bump major
+venus publish-game prod
 
 # If you don't have game.config.json, specify manually:
-
-# Update with patch version bump
 venus update-game --id "abc123xyz" --path "./build/web" --bump patch
-
-# Override config file values
-venus update-game --id "different-id" --path "./different/path" --bump minor
 ```
 
 ### Example 3: Typical Development Workflow
@@ -326,20 +383,31 @@ venus update-game --id "different-id" --path "./different/path" --bump minor
 venus create-game --name "My Awesome Game" --path "./dist"
 # This creates game.config.json automatically
 
+# Publish to dev for initial testing
+venus publish-game dev
+
 # Make changes to your game...
 # Build your game to ./dist
 
-# Push updates - super simple!
-venus update-game
+# Create a new version - super simple!
+venus update-game --bump patch
 # Uses game.config.json, defaults to patch bump (1.0.0 → 1.0.1)
 
+# Publish to dev for testing
+venus publish-game dev
+
+# After testing, publish to production
+venus publish-game prod
+
 # Major feature release
-venus update-game --bump minor
-# 1.0.1 → 1.1.0
+venus update-game --bump minor  # 1.0.1 → 1.1.0
+venus publish-game dev          # Test first
+venus publish-game prod         # Then go live
 
 # Breaking changes
-venus update-game --bump major
-# 1.1.0 → 2.0.0
+venus update-game --bump major  # 1.1.0 → 2.0.0
+venus publish-game dev          # Test first
+venus publish-game prod         # Then go live
 
 # Check all your games
 venus list-games
@@ -348,26 +416,27 @@ venus list-games
 ### Example 4: Multi-Environment Workflow
 
 ```bash
-# Configure staging environment
+# Configure your environments
+venus configure-env dev --base-url "https://dev-api.venus.com" --access-token "dev-token"
 venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
-
-# Configure production environment
 venus configure-env prod --base-url "https://api.venus.com" --access-token "production-token"
 
 # List all environments
 venus list-envs
 
-# Use staging environment
-venus use-env staging
-
-# Create app in staging
-venus create-game --name "My Game Beta" --path "./dist"
-
-# Switch to production
-venus use-env prod
-
-# Create app in production
+# Create your game
 venus create-game --name "My Game" --path "./dist"
+
+# Publish to different environments for testing
+venus publish-game dev       # Development testing
+venus publish-game staging   # Staging/QA testing
+venus publish-game prod      # Production release
+
+# Update and publish to all environments
+venus update-game --bump minor
+venus publish-game dev
+venus publish-game staging
+venus publish-game prod
 ```
 
 ## Troubleshooting
@@ -386,23 +455,35 @@ venus create-game --name "My Game" --path "./dist"
 
 3. **"Unable to load game config" error**
    - Make sure you're running the command from the directory containing `game.config.json`
-   - Or provide `--id` and `--path` options manually
+   - Or provide `--id` and `--path` options manually (for `update-game`)
    - Verify the `game.config.json` file is valid JSON
+   - For `publish-game`, ensure `game.config.json` exists in the current directory
 
-4. **Authentication errors**
+4. **"Game not found" or "Game has no version" error**
+   - Ensure you've created the game using `venus create-game` first
+   - Verify the game ID in `game.config.json` is correct
+   - Make sure you've created at least one version using `venus update-game` before publishing
+
+5. **"Env not found" error**
+   - The environment you're trying to publish to hasn't been configured
+   - Run `venus configure-env <env-name>` to set up the environment
+   - Use `venus list-envs` to see all configured environments
+   - Note: `prod` doesn't need to be configured, but other environments do
+
+6. **Authentication errors**
    - Run `venus configure-env <env-name>` to update your credentials
    - Check if your access token has expired
    - Verify the API base URL is correct
    - Ensure you're using the correct environment with `venus use-env <env-name>`
 
-5. **Version conflicts**
-   - When updating an app, the version must be higher than the current version
+7. **Version conflicts**
+   - When updating a game, the version must be higher than the current version
    - Use appropriate bump type (major, minor, patch)
 
 ### Getting Help
 
 - Check the command help: `venus --help`
-- Check specific command help: `venus create-game --help`, `venus update-game --help`, `venus configure-env --help`, etc.
+- Check specific command help: `venus create-game --help`, `venus update-game --help`, `venus publish-game --help`, `venus configure-env --help`, etc.
 - Review the error messages carefully - they often contain helpful information
 
 ## License
