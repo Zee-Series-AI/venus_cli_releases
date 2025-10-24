@@ -53,17 +53,17 @@ The installer will:
 
 ## Quick Start
 
-The CLI works out of the box with your local development environment. No configuration needed!
+### Publishing NEW game to Venus
 
 ```bash
-# 1. Create a new game (creates game.config.json automatically)
+# 1. Create a new game (creates game.config.json automatically) Skip this step if you alread have a game uploaded to venus
 venus create-game --name "My Game" --path "./dist"
 
 # 2. Create new versions as you develop (uses game.config.json)
 venus update-game --bump patch
 
-# 3. Publish your game to a specific environment
-venus publish-game dev
+# 3. Publish your game to the selected environment
+venus publish-game
 
 # List your games
 venus list-games
