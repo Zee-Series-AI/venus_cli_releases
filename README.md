@@ -8,14 +8,15 @@ A command-line interface tool for managing HTML5 games on the Venus platform. Th
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Commands](#commands)
+  - [login](#login)
   - [create-game](#create-game)
   - [update-game](#update-game)
   - [publish-game](#publish-game)
+  - [update-and-publish-game](#update-and-publish-game)
   - [list-games](#list-games)
   - [configure-game](#configure-game)
   - [use-env](#use-env)
   - [list-envs](#list-envs)
-  - [configure-env](#configure-env)
   - [update](#update)
 - [Environment Variables](#environment-variables)
 - [Usage Examples](#usage-examples)
@@ -56,14 +57,18 @@ The installer will:
 ### Publishing NEW game to Venus
 
 ```bash
-# 1. Create a new game (creates game.config.json automatically) Skip this step if you alread have a game uploaded to venus
+# 1. Login to Venus (required for authentication)
+venus login
+
+# 2. Create a new game (creates game.config.json automatically)
 venus create-game --name "My Game" --path "./dist"
 
-# 2. Create new versions as you develop (uses game.config.json)
-venus update-game --bump patch
-
 # 3. Publish your game to the selected environment
-venus publish-game
+venus publish-game --env prod
+
+# Or create new versions and publish
+venus update-game --bump patch
+venus publish-game --env prod
 
 # List your games
 venus list-games
@@ -71,54 +76,67 @@ venus list-games
 
 ## Configuration
 
-Configuration is **optional**. By default, the CLI will automatically connect to the local development environment:
-- **Default API Base URL**: `http://localhost:5001/dev-venus-app/us-central1`
-- **Default API Access Token**: `dev-secret-key`
+### Authentication
 
-### Custom Configuration (Optional)
-
-If you need to connect to a different environment (staging, production, etc.), you can configure the CLI with your Venus API credentials.
-
-#### Configuring Environments
-
-The CLI supports multiple named environments (dev, staging, production, etc.):
+Before using the CLI, you need to authenticate with your Venus account:
 
 ```bash
-# Configure the default 'dev' environment
-venus configure-env dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
-
-# Configure a staging environment
-venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "your-staging-token"
-
-# Configure a production environment
-venus configure-env prod --base-url "https://api.venus.com" --access-token "your-production-token"
+venus login
 ```
 
-**Options:**
-- Environment name (argument): The name of the environment (e.g., `dev`, `staging`, `prod`)
-- `--base-url`: The Venus API endpoint URL
-- `--access-token`: Your authentication token for the Venus API
+This will open a browser window for you to sign in with your Venus credentials. Your session will be saved locally and automatically refreshed when needed.
 
-The configuration is saved to `~/.venus_cli/config.json`.
+**Login Options:**
+- `--force`: Force a new login even if you're already authenticated
+
+### Environments
+
+The CLI comes with pre-configured environments:
+- **local**: For local development (`http://localhost:5001`)
+- **dev**: Development environment
+- **prod**: Production environment (default)
+
+The default environment is `prod`. You can switch between environments or check which one is active.
 
 #### Switching Between Environments
 
 ```bash
-# Switch to staging environment
-venus use-env staging
+# Switch to dev environment
+venus use-env dev
 
 # Switch to production environment
 venus use-env prod
+
+# Switch to local environment
+venus use-env local
 ```
 
 #### Listing Environments
 
 ```bash
-# See all configured environments
+# See all available environments and which is active
 venus list-envs
 ```
 
 ## Commands
+
+### login
+
+Authenticate with your Venus account.
+
+```bash
+venus login
+```
+
+**Options:**
+- `--force`: Force a new login even if you're already authenticated
+
+**What it does:**
+1. Opens a browser window for authentication
+2. Saves your session locally in `~/.venus_cli/`
+3. Automatically refreshes your session when it expires
+
+**Note:** You need to login before using commands like `create-game`, `update-game`, `publish-game`, and `list-games`.
 
 ### create-game
 
@@ -188,27 +206,32 @@ venus update-game --id "your-game-id" --path "/path/to/game/dist" --bump patch
 Makes your game visible in a specific environment by publishing the latest version.
 
 ```bash
-# Publish to a custom environment (dev, staging, etc.)
-venus publish-game dev
+# Publish to dev environment
+venus publish-game --env dev
 
 # Publish to production
-venus publish-game prod
+venus publish-game --env prod
+
+# Skip confirmation prompt
+venus publish-game --env prod --yes
 ```
 
-**Arguments:**
-- `environment` (required): The environment name to publish to (e.g., `dev`, `staging`, `prod`)
+**Options:**
+- `--env`: The environment name to publish to (e.g., `local`, `dev`, `prod`). If not specified, uses the active environment.
+- `--yes`: Skip the confirmation prompt
+- `--id`: Game ID to publish (optional, reads from `game.config.json` if not provided)
 
 **What it does:**
-1. Fetches your game information from `game.config.json`
+1. Fetches your game information from `game.config.json` (or uses the `--id` option)
 2. Gets the latest version of your game
-3. Publishes that version to the specified environment
-4. Returns a OneLink URL for accessing the game
+3. Asks for confirmation (unless `--yes` is used)
+4. Publishes that version to the specified environment
+5. Returns a OneLink URL for accessing the game
 
 **Important:**
-- Uses `game.config.json` to determine which game to publish
-- For custom environments (non-prod), you must have configured that environment using `configure-env`
-- Publishing to `prod` uses the production publishing flow
-- Publishing to other environments pushes the game to that specific environment's backend
+- Uses `game.config.json` to determine which game to publish (if `--id` is not provided)
+- If `--env` is not specified, uses the currently active environment (check with `venus list-envs`)
+- You must be logged in to publish games
 
 **Example workflow:**
 ```bash
@@ -216,10 +239,43 @@ venus publish-game prod
 venus update-game --bump patch
 
 # Publish to dev environment for testing
-venus publish-game dev
+venus publish-game --env dev
 
 # Once tested, publish to production
-venus publish-game prod
+venus publish-game --env prod --yes
+```
+
+### update-and-publish-game
+
+A convenience command that updates your game to a new version and immediately publishes it.
+
+```bash
+# Update with patch bump and publish to dev
+venus update-and-publish-game --bump patch --env dev
+
+# Update with minor bump and publish to prod (with confirmation skip)
+venus update-and-publish-game --bump minor --env prod --yes
+
+# Use defaults from game.config.json
+venus update-and-publish-game
+```
+
+**Options:**
+- `--id`: Game ID to update (optional, reads from `game.config.json` if not provided)
+- `--path`: Path to game distribution folder (optional, reads from `game.config.json` if not provided)
+- `--bump`: Version bump type - `major`, `minor`, or `patch` (default: `patch`)
+- `--env`: Environment to publish to (default: active environment)
+- `--yes`: Skip confirmation prompt
+
+**What it does:**
+1. Runs `update-game` with the specified options
+2. If update succeeds, runs `publish-game` with the specified environment
+3. Returns the OneLink URL for the published game
+
+This is equivalent to running:
+```bash
+venus update-game --bump patch
+venus publish-game --env dev
 ```
 
 ### list-games
@@ -256,37 +312,21 @@ Creates or updates the `game.config.json` file in your current directory, making
 Switch to a different environment.
 
 ```bash
-venus use-env staging
+venus use-env dev
 ```
 
 **Argument:**
-- Environment name: The name of the environment to use (e.g., `dev`, `staging`, `prod`)
+- Environment name: The name of the environment to use (e.g., `local`, `dev`, `prod`)
 
 ### list-envs
 
-List all configured environments.
+List all available environments.
 
 ```bash
 venus list-envs
 ```
 
-Shows all environments you've configured, along with their base URLs and which one is currently active.
-
-### configure-env
-
-Configure a specific environment or update the currently active environment.
-
-```bash
-venus configure-env dev --base-url "http://localhost:5001/dev-venus-app/us-central1" --access-token "dev-secret-key"
-venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
-```
-
-**Argument:**
-- Environment name: The name of the environment to configure (e.g., `dev`, `staging`, `prod`)
-
-**Options:**
-- `--base-url`: The Venus API endpoint URL
-- `--access-token`: Your authentication token for the Venus API
+Shows all pre-configured environments (local, dev, prod) and which one is currently active.
 
 ### update
 
@@ -325,29 +365,28 @@ You are already up to date.
 
 ## Environment Variables
 
-You can override configuration settings using environment variables:
-
-- `VENUS_API_BASE_URL`: Overrides the configured API base URL
-- `VENUS_API_ACCESS_TOKEN`: Overrides the configured API access token
-
-Environment variables take precedence over the config file.
+Currently, the CLI does not use environment variables for configuration. All settings are managed through the `venus login` and `venus use-env` commands.
 
 ## Usage Examples
 
 ### Example 1: Creating and Publishing a New Game
 
 ```bash
-# Step 1: Create your game
+# Step 1: Login to Venus
+venus login
+# Opens browser for authentication
+
+# Step 2: Create your game
 venus create-game --name "Space Invaders HD" --path "./build/web"
 # Output: Game created with id 'abc123xyz'
 # Creates game.config.json automatically
 
-# Step 2: Publish to dev environment for testing
-venus publish-game dev
+# Step 3: Publish to dev environment for testing
+venus publish-game --env dev
 # Output: Published game with OneLink
 
-# Step 3: Once tested, publish to production
-venus publish-game prod
+# Step 4: Once tested, publish to production
+venus publish-game --env prod
 ```
 
 ### Example 2: Updating an Existing Game
@@ -359,32 +398,36 @@ venus publish-game prod
 venus update-game --bump patch
 
 # Publish the new version to dev for testing
-venus publish-game dev
+venus publish-game --env dev
 
 # After testing, publish to production
-venus publish-game prod
+venus publish-game --env prod
 
 # Create a new version with a minor bump (1.0.1 → 1.1.0)
 venus update-game --bump minor
-venus publish-game prod
+venus publish-game --env prod
 
 # Create a new version with a major bump (1.1.0 → 2.0.0)
 venus update-game --bump major
-venus publish-game prod
+venus publish-game --env prod
 
 # If you don't have game.config.json, specify manually:
 venus update-game --id "abc123xyz" --path "./build/web" --bump patch
+venus publish-game --id "abc123xyz" --env prod
 ```
 
 ### Example 3: Typical Development Workflow
 
 ```bash
-# Initial setup: Create your game
+# Initial setup: Login
+venus login
+
+# Create your game
 venus create-game --name "My Awesome Game" --path "./dist"
 # This creates game.config.json automatically
 
 # Publish to dev for initial testing
-venus publish-game dev
+venus publish-game --env dev
 
 # Make changes to your game...
 # Build your game to ./dist
@@ -394,20 +437,20 @@ venus update-game --bump patch
 # Uses game.config.json, defaults to patch bump (1.0.0 → 1.0.1)
 
 # Publish to dev for testing
-venus publish-game dev
+venus publish-game --env dev
 
 # After testing, publish to production
-venus publish-game prod
+venus publish-game --env prod
 
 # Major feature release
-venus update-game --bump minor  # 1.0.1 → 1.1.0
-venus publish-game dev          # Test first
-venus publish-game prod         # Then go live
+venus update-game --bump minor        # 1.0.1 → 1.1.0
+venus publish-game --env dev          # Test first
+venus publish-game --env prod         # Then go live
 
 # Breaking changes
-venus update-game --bump major  # 1.1.0 → 2.0.0
-venus publish-game dev          # Test first
-venus publish-game prod         # Then go live
+venus update-game --bump major        # 1.1.0 → 2.0.0
+venus publish-game --env dev          # Test first
+venus publish-game --env prod         # Then go live
 
 # Check all your games
 venus list-games
@@ -416,75 +459,91 @@ venus list-games
 ### Example 4: Multi-Environment Workflow
 
 ```bash
-# Configure your environments
-venus configure-env dev --base-url "https://dev-api.venus.com" --access-token "dev-token"
-venus configure-env staging --base-url "https://staging-api.venus.com" --access-token "staging-token"
-venus configure-env prod --base-url "https://api.venus.com" --access-token "production-token"
+# Login first
+venus login
 
-# List all environments
+# List all available environments
 venus list-envs
 
 # Create your game
 venus create-game --name "My Game" --path "./dist"
 
 # Publish to different environments for testing
-venus publish-game dev       # Development testing
-venus publish-game staging   # Staging/QA testing
-venus publish-game prod      # Production release
+venus publish-game --env dev        # Development testing
+venus publish-game --env prod       # Production release
 
 # Update and publish to all environments
 venus update-game --bump minor
-venus publish-game dev
-venus publish-game staging
-venus publish-game prod
+venus publish-game --env dev --yes
+venus publish-game --env prod --yes
+
+# Or use the combined command for quick iterations
+venus update-and-publish-game --bump patch --env dev --yes
+```
+
+### Example 5: Using the Combined Update and Publish Command
+
+```bash
+# Quick iteration: update and publish in one command
+venus update-and-publish-game --bump patch --env dev
+
+# With confirmation skip for automated workflows
+venus update-and-publish-game --bump minor --env prod --yes
+
+# Use defaults from game.config.json and active environment
+venus use-env dev
+venus update-and-publish-game
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Failed to upload file" error**
-   - Check your internet connection
-   - Verify your API access token is valid
-   - Ensure the game distribution folder exists and is not empty
+1. **"Session expired" or authentication errors**
+   - Run `venus login` to authenticate
+   - If already logged in, try `venus login --force` to force a new login session
+   - Your session is automatically refreshed, but if you encounter issues, re-login
 
-2. **"Game dist folder does not exist" error**
+2. **"Failed to upload file" error**
+   - Check your internet connection
+   - Ensure you're logged in with `venus login`
+   - Verify the game distribution folder exists and is not empty
+
+3. **"Game dist folder does not exist" error**
    - Verify the path to your game's build folder is correct
    - Ensure you're using the full path or correct relative path
    - Check that the path in `game.config.json` is correct if using auto-detection
 
-3. **"Unable to load game config" error**
+4. **"Unable to load game config" error**
    - Make sure you're running the command from the directory containing `game.config.json`
    - Or provide `--id` and `--path` options manually (for `update-game`)
    - Verify the `game.config.json` file is valid JSON
    - For `publish-game`, ensure `game.config.json` exists in the current directory
 
-4. **"Game not found" or "Game has no version" error**
+5. **"Game not found" or "Game has no version" error**
    - Ensure you've created the game using `venus create-game` first
    - Verify the game ID in `game.config.json` is correct
    - Make sure you've created at least one version using `venus update-game` before publishing
 
-5. **"Env not found" error**
-   - The environment you're trying to publish to hasn't been configured
-   - Run `venus configure-env <env-name>` to set up the environment
-   - Use `venus list-envs` to see all configured environments
-   - Note: `prod` doesn't need to be configured, but other environments do
-
-6. **Authentication errors**
-   - Run `venus configure-env <env-name>` to update your credentials
-   - Check if your access token has expired
-   - Verify the API base URL is correct
-   - Ensure you're using the correct environment with `venus use-env <env-name>`
+6. **"Env not found" error**
+   - The environment you're trying to use doesn't exist
+   - Use `venus list-envs` to see all available environments (local, dev, prod)
+   - Make sure you're using the correct environment name with `--env` option
 
 7. **Version conflicts**
    - When updating a game, the version must be higher than the current version
    - Use appropriate bump type (major, minor, patch)
 
+8. **Permission issues on macOS/Linux**
+   - If you encounter permission errors during installation, make sure the installation directory is writable
+   - You may need to use `sudo` for installation to `/usr/local/bin`
+
 ### Getting Help
 
 - Check the command help: `venus --help`
-- Check specific command help: `venus create-game --help`, `venus update-game --help`, `venus publish-game --help`, `venus configure-env --help`, etc.
+- Check specific command help: `venus login --help`, `venus create-game --help`, `venus update-game --help`, `venus publish-game --help`, etc.
 - Review the error messages carefully - they often contain helpful information
+- Make sure you're on the latest version by running `venus update`
 
 ## License
 
