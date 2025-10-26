@@ -35,10 +35,16 @@ curl -fsSL https://github.com/Zee-Series-AI/venus_cli_releases/releases/latest/d
 ```
 
 The installer will:
-- Automatically detect your OS and architecture
+- Automatically detect your OS and architecture (supports x64 and ARM64)
 - Download the correct binary
-- Install it to `/usr/local/bin`
+- Install it to `~/.local/bin` (user directory, no sudo required)
 - Make it executable and ready to use
+- Automatically add the install directory to your PATH if needed
+
+**Custom installation directory:**
+```bash
+curl -fsSL https://github.com/Zee-Series-AI/venus_cli_releases/releases/latest/download/install.sh | bash -s -- --install-dir=/custom/path
+```
 
 #### Windows (PowerShell)
 
@@ -47,10 +53,20 @@ irm https://github.com/Zee-Series-AI/venus_cli_releases/releases/latest/download
 ```
 
 The installer will:
-- Automatically detect your architecture
+- Automatically detect your architecture (supports x64 and ARM64)
 - Download the correct binary
 - Install it to `%LOCALAPPDATA%\Programs\Venus`
-- Optionally add the installation directory to your PATH
+- Optionally add the installation directory to your PATH (you'll be prompted)
+
+#### Verify Installation
+
+After installation, verify that Venus CLI is installed correctly:
+
+```bash
+venus --help
+```
+
+You should see the list of available commands and options.
 
 ## Quick Start
 
@@ -84,10 +100,12 @@ Before using the CLI, you need to authenticate with your Venus account:
 venus login
 ```
 
-This will open a browser window for you to sign in with your Venus credentials. Your session will be saved locally and automatically refreshed when needed.
+This will open a browser window for you to sign in with your Venus credentials. Your session will be saved locally in `~/.venus_cli/` (or `%USERPROFILE%\.venus_cli\` on Windows) and automatically refreshed when needed.
 
 **Login Options:**
 - `--force`: Force a new login even if you're already authenticated
+
+**Note:** Your credentials are stored securely on your local machine. The CLI never stores your password directly.
 
 ### Environments
 
@@ -159,7 +177,7 @@ venus create-game --name "My Awesome Game" --path "/path/to/game/dist"
 
 **About game.config.json:**
 
-This file stores your game's configuration and makes future updates easier:
+This file stores your game's configuration and makes future updates easier. It should be located in the root of your project directory (where you run venus commands):
 ```json
 {
   "gameId": "your-game-id",
@@ -167,7 +185,7 @@ This file stores your game's configuration and makes future updates easier:
 }
 ```
 
-With this file, you can run `venus update-game` and `venus publish-game` without specifying the game ID!
+With this file, you can run `venus update-game` and `venus publish-game` without specifying the game ID or path!
 
 **Note:** After creating a game, you'll need to use `publish-game` to make it visible in a specific environment.
 
@@ -349,7 +367,7 @@ venus update
 - Creates a backup of the old executable (.bak file)
 - The update process is automatic and seamless
 
-**Note:** The CLI also automatically checks for updates when you run any command and will notify you if a new version is available.
+**Note:** The CLI automatically checks for updates when you run any command and will display a notification if a new version is available. You can then run `venus update` at your convenience to upgrade.
 
 **Example output:**
 ```
@@ -369,6 +387,13 @@ You are already up to date.
 ## Environment Variables
 
 Currently, the CLI does not use environment variables for configuration. All settings are managed through the `venus login` and `venus use-env` commands.
+
+### Data Storage Locations
+
+The Venus CLI stores configuration data in the following locations:
+- **Session data**: `~/.venus_cli/` (macOS/Linux) or `%USERPROFILE%\.venus_cli\` (Windows)
+- **Game configuration**: `game.config.json` in your project directory
+- **Environment preferences**: Stored in the CLI data directory
 
 ## Usage Examples
 
@@ -537,16 +562,27 @@ venus update-and-publish-game
    - When updating a game, the version must be higher than the current version
    - Use appropriate bump type (major, minor, patch)
 
-8. **Permission issues on macOS/Linux**
-   - If you encounter permission errors during installation, make sure the installation directory is writable
-   - You may need to use `sudo` for installation to `/usr/local/bin`
+8. **PATH not updated after installation (macOS/Linux)**
+   - The installer automatically adds `~/.local/bin` to your PATH
+   - You may need to reload your shell: `source ~/.bashrc` (or `~/.zshrc` for zsh)
+   - Or simply open a new terminal window
+   - To verify: run `echo $PATH` and check if `~/.local/bin` is listed
+   - If you used a custom install directory, make sure it's in your PATH
 
 ### Getting Help
 
 - Check the command help: `venus --help`
-- Check specific command help: `venus login --help`, `venus create-game --help`, `venus update-game --help`, `venus publish-game --help`, etc.
+- Check specific command help: `venus <command> --help` (e.g., `venus login --help`, `venus create-game --help`, etc.)
 - Review the error messages carefully - they often contain helpful information
 - Make sure you're on the latest version by running `venus update`
+- Check the [GitHub releases](https://github.com/Zee-Series-AI/venus_cli_releases/releases) for changelogs and known issues
+
+### Additional Tips
+
+- **Always work from your project directory**: The CLI looks for `game.config.json` in your current directory
+- **Use `--help` liberally**: Every command has detailed help available with the `--help` flag
+- **Keep the CLI updated**: Run `venus update` regularly to get the latest features and bug fixes
+- **Backup your game.config.json**: Keep this file in version control for team collaboration
 
 ## License
 
