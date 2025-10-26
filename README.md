@@ -343,16 +343,19 @@ venus update
 4. If you're already on the latest version, informs you that no update is needed
 
 **How it works:**
-- On Windows: Downloads and runs the PowerShell installer script
-- On macOS/Linux: Downloads and runs the bash installer script
-- The update process is automatic and will replace your current installation
+- Automatically detects your operating system (Windows, macOS, or Linux) and architecture (x64 or ARM64)
+- Downloads the appropriate binary package for your platform
+- Replaces your current installation with the new version
+- Creates a backup of the old executable (.bak file)
+- The update process is automatic and seamless
+
+**Note:** The CLI also automatically checks for updates when you run any command and will notify you if a new version is available.
 
 **Example output:**
 ```
 Current version: 1.0.0
 Latest version: 1.1.0
-Updating via bash...
-✅ Update completed successfully.
+✅ Version 1.1.0 has been installed.
 ```
 
 or if already up to date:
