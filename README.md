@@ -41,11 +41,6 @@ The installer will:
 - Make it executable and ready to use
 - Automatically add the install directory to your PATH if needed
 
-**Custom installation directory:**
-```bash
-curl -fsSL https://github.com/Zee-Series-AI/venus_cli_releases/releases/latest/download/install.sh | bash -s -- --install-dir=/custom/path
-```
-
 #### Windows (PowerShell)
 
 ```powershell
